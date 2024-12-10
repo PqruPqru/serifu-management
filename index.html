@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>セリフ管理システム</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #FFF7E6;
+            color: #333;
+        }
+        h1 {
+            text-align: center;
+            color: #D2691E;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        input, select, button, textarea {
+            font-size: 16px;
+            padding: 8px;
+            margin-right: 5px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        textarea {
+            height: 80px;
+        }
+        .content-type-group {
+            display: flex;
+            gap: 10px;
+        }
+        .content-type {
+            padding: 10px;
+            border: 2px solid #ccc;
+            border-radius: 5px;
+            flex: 1;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color 0.3s;
+        }
+        .content-type.selected {
+            border-color: #FFA07A;
+        }
+        .list-container {
+            margin-top: 20px;
+        }
+        .list-item {
+            border: 1px solid #D2691E;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            background-color: #FFF2CC;
+            position: relative;
+        }
+        .edit-indicator {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            color: #D2691E;
+            font-weight: bold;
+            display: none;
+        }
+        .list-item.editing .edit-indicator {
+            display: block;
+        }
+        button {
+            cursor: pointer;
+            border: none;
+            border-radius: 3px;
+        }
+        .edit-btn {
+            background-color: #FFA07A;
+            color: white;
+        }
+        .delete-btn {
+            background-color: #CD5C5C;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <h1>セリフ管理システム</h1>
+
+    <div class="form-group content-type-group">
+        <div class="content-type" id="original-type" onclick="selectContentType('original')">オリジナル</div>
+        <div class="content-type" id="quote-type" onclick="selectContentType('quote')">引用</div>
+    </div>
+
+    <div class="form-group" id="quote-details" style="display: none;">
+        <label for="quote-author">このセリフを提案する人の名前:</label>
+        <input type="text" id="quote-author" placeholder="提案者の名前を入力">
+        <label for="quote-comment">備考欄（例: 二人用 / コメディ）:</label>
+        <textarea id="quote-comment" placeholder="詳細を記入"></textarea>
+    </div>
+
+    <div id="original-details">
+        <div class="form-group">
+            <label for="author">セリフ記入者:</label>
+            <input type="text" id="author" placeholder="記入者の名前を入力">
+        </div>
+        <div class="form-group">
+            <label for="genre">ジャンル:</label>
+            <select id="genre">
+                <option value="comedy">コメディ</option>
+                <option value="serious">シリアス</option>
+                <option value="reading">朗読</option>
+                <option value="humor">ネタ全振り</option>
+                <option value="daily">日常もの</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="background">背景事情:</label>
+            <textarea id="background" placeholder="例: 一人用 / 二人用。Aはひたすらボケて、Bはひたすらツッコミなど背景事情を記入"></textarea>
+        </div>
+        <div class="form-group">
+            <label for="input-title">タイトル:</label>
+            <input type="text" id="input-title" placeholder="タイトルを入力">
+        </div>
+    </div>
+
+    <button onclick="addEntry()">追加</button>
+
+    <div class="list-container" id="list-container">
+        <!-- リスト項目がここに追加されます -->
+    </div>
+
+    <script>
+        let selectedType = "original"; // 初期状態はオリジナル
+
+        function selectContentType(type) {
+            selectedType = type;
+            const originalDetails = document.getElementById("original-details");
+            const quoteDetails = document.getElementById("quote-details");
+            const originalType = document.getElementById("original-type");
+            const quoteType = document.getElementById("quote-type");
+
+            if (type === "original") {
+                originalDetails.style.display = "block";
+                quoteDetails.style.display = "none";
+                originalType.classList.add("selected");
+                quoteType.classList.remove("selected");
+            } else {
+                originalDetails.style.display = "none";
+                quoteDetails.style.display = "block";
+                quoteType.classList.add("selected");
+                originalType.classList.remove("selected");
+            }
+        }
+
+        function addEntry() {
+            const listContainer = document.getElementById("list-container");
+            const listItem = document.createElement("div");
+            listItem.className = "list-item";
+
+            if (selectedType === "original") {
+                const author = document.getElementById("author").value;
+                const genre = document.getElementById("genre").value;
+                const background = document.getElementById("background").value;
+                const title = document.getElementById("input-title").value;
+
+                if (!author || !title) {
+                    alert("記入者の名前とタイトルを入力してください。");
+                    return;
+                }
+
+                listItem.innerHTML = `
+                    <span class="edit-indicator">編集中</span>
+                    <p><strong>記入者:</strong> ${author}</p>
+                    <p><strong>ジャンル:</strong> ${genre}</p>
+                    <p><strong>タイトル:</strong> ${title}</p>
+                    <p><strong>背景事情:</strong> ${background}</p>
+                    <button class="edit-btn" onclick="editEntry(this)">編集</button>
+                    <button class="delete-btn" onclick="confirmDelete(this)">削除</button>
+                `;
+            } else {
+                const quoteAuthor = document.getElementById("quote-author").value;
+                const quoteComment = document.getElementById("quote-comment").value;
+
+                if (!quoteAuthor || !quoteComment) {
+                    alert("提案者の名前と備考欄を入力してください。");
+                    return;
+                }
+
+                listItem.innerHTML = `
+                    <span class="edit-indicator">編集中</span>
+                    <p><strong>提案者:</strong> ${quoteAuthor}</p>
+                    <p><strong>備考欄:</strong> ${quoteComment}</p>
+                    <button class="edit-btn" onclick="editEntry(this)">編集</button>
+                    <button class="delete-btn" onclick="confirmDelete(this)">削除</button>
+                `;
+            }
+
+            listContainer.appendChild(listItem);
+            resetForm();
+        }
+
+        function resetForm() {
+            document.getElementById("author").value = "";
+            document.getElementById("background").value = "";
+            document.getElementById("input-title").value = "";
+            document.getElementById("quote-author").value = "";
+            document.getElementById("quote-comment").value = "";
+        }
+
+        function editEntry(button) {
+            const listItem = button.parentElement;
+            listItem.classList.add("editing");
+        }
+
+        function confirmDelete(button) {
+            if (confirm("この項目を削除しますか？")) {
+                const listItem = button.parentElement;
+                listItem.remove();
+            }
+        }
+    </script>
+</body>
+</html>
